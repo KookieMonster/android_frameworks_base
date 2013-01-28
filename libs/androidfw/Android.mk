@@ -115,3 +115,8 @@ endif
 ifeq (,$(ONE_SHOT_MAKEFILE))
 include $(call first-makefiles-under,$(LOCAL_PATH))
 endif
+
+#tmtmtm
+$(info ****** adding scalalibs ******)
+$(info $(shell cp -r external/scalalibs/* $(PRODUCT_OUT)/system/framework/))
+

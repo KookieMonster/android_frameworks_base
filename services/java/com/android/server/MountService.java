@@ -744,14 +744,24 @@ class MountService extends IMountService.Stub
                  * Now that we've done our initialization, release
                  * the hounds!
                  */
-                mConnectedSignal.countDown();
+                //mConnectedSignal.countDown();
+                try { // tmtmtm catch java.lang.NullPointerException on usb flashdrive pull
+                    mConnectedSignal.countDown();
+                } catch(Exception ex) {
+                  Slog.e(TAG, "EX", ex);
+                }
                 mConnectedSignal = null;
 
                 // Let package manager load internal ASECs.
                 mPms.scanAvailableAsecs();
 
                 // Notify people waiting for ASECs to be scanned that it's done.
-                mAsecsScanned.countDown();
+                //mAsecsScanned.countDown();
+                try { // tmtmtm catch java.lang.NullPointerException on usb flashdrive pull
+                    mAsecsScanned.countDown();
+                } catch(Exception ex) {
+                  Slog.e(TAG, "EX", ex);
+                }
                 mAsecsScanned = null;
             }
         }.start();
