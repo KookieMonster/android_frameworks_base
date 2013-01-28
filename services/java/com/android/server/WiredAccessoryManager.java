@@ -45,6 +45,10 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.BufferedReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * <p>WiredAccessoryManager monitors for a wired headset on the main board or dock using
  * both the InputManagerService notifyWiredAccessoryChanged interface and the UEventObserver
@@ -86,6 +90,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
     private final boolean mUseDevInputEventForAudioJack;
 
+    // tmtmtm
+    private final Context mContext;
+    private static final String ALSA_ID = "116";
+
     public WiredAccessoryManager(Context context, InputManagerService inputManager) {
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WiredAccessoryManager");
@@ -97,6 +105,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 context.getResources().getBoolean(R.bool.config_useDevInputEventForAudioJack);
 
         mObserver = new WiredAccessoryObserver();
+
+        // tmtmtm
+        mContext = context;
+        mObserver.startObserving("MAJOR="+ALSA_ID);
 
         File f = new File("/sys/class/switch/dock/state");
         if (f!=null && f.exists()) {
@@ -131,7 +143,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
     }
 
     private void bootCompleted() {
+        if (LOG) Slog.v(TAG, "bootCompleted()");
         if (mUseDevInputEventForAudioJack) {
+            if (LOG) Slog.v(TAG, "bootCompleted() mUseDevInputEventForAudioJack");
             int switchValues = 0;
             if (mInputManager.getSwitchState(-1, InputDevice.SOURCE_ANY, SW_HEADPHONE_INSERT) == 1) {
                 switchValues |= SW_HEADPHONE_INSERT_BIT;
@@ -240,6 +254,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_NEW_DEVICE_STATE:
+                    if (LOG) Slog.v(TAG, "MSG_NEW_DEVICE_STATE arg1="+msg.arg1+" arg2="+msg.arg2);
                     setDevicesState(msg.arg1, msg.arg2, (String)msg.obj);
                     mWakeLock.release();
             }
@@ -248,6 +263,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
     private void setDevicesState(
             int headsetState, int prevHeadsetState, String headsetName) {
+        if (LOG) Slog.v(TAG, "setDevicesState headsetState="+headsetState+" prevHeadsetState="+prevHeadsetState+" headsetName="+headsetName);
         synchronized (mLock) {
             int allHeadsets = SUPPORTED_HEADSETS;
             for (int curHeadset = 1; allHeadsets != 0; curHeadset <<= 1) {
@@ -340,6 +356,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 }
             }
 
+            if (LOG) Slog.v(TAG, "init() observe all UEVENTs");
             // At any given time accessories could be inserted
             // one on the board, one on the dock, one on the
             // samsung dock and one on HDMI:
@@ -347,8 +364,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             // by the Kernel
             for (int i = 0; i < mUEventInfo.size(); ++i) {
                 UEventInfo uei = mUEventInfo.get(i);
+                if (LOG) Slog.v(TAG, "init() startObserving="+uei.getDevPath());
                 startObserving("DEVPATH="+uei.getDevPath());
             }
+            if (LOG) Slog.v(TAG, "init() done");
         }
 
         private int validateSwitchState(int state) {
@@ -375,6 +394,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             // Monitor USB
             uei = new UEventInfo(NAME_USB_AUDIO, BIT_USB_HEADSET_ANLG, BIT_USB_HEADSET_DGTL);
             if (uei.checkSwitchExists()) {
+                Slog.i(TAG, "This kernel has usb audio support");
                 retVal.add(uei);
             } else {
                 Slog.w(TAG, "This kernel does not have usb audio support");
@@ -413,7 +433,32 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
         @Override
         public void onUEvent(UEventObserver.UEvent event) {
-            if (LOG) Slog.v(TAG, "Headset UEVENT: " + event.toString());
+            //if (LOG) Slog.v(TAG, "UEVENT: " + event.toString());
+
+            // tmtmtm: handle UEvent containing ALSA usb audio device
+            String major = event.get("MAJOR");
+            String devname = event.get("DEVNAME");
+            if (major!=null && major.equals(ALSA_ID)) {
+                String devpath = event.get("DEVPATH").toLowerCase();
+                if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
+                if (devpath.contains("usb") && !devpath.contains("gadget") && devname.endsWith("p")) {
+                    try {
+                        if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
+                        mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
+                        final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
+                        usbAudio.putExtra("state", event.get("ACTION").equals("add")?1:0);
+                        usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
+                        usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
+                        usbAudio.putExtra("channels", 2);
+                        mContext.sendStickyBroadcast(usbAudio);
+                    } catch (Exception ex) {
+                        Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
+                    }
+                } else {
+		            //if(LOG) Slog.v(TAG, "NOT BEING HANDELED");
+                }
+                return;
+            }
 
             int state = validateSwitchState(Integer.parseInt(event.get("SWITCH_STATE")));
             try {
