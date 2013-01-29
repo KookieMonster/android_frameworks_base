@@ -45,10 +45,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.BufferedReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * <p>WiredAccessoryManager monitors for a wired headset on the main board or dock using
  * both the InputManagerService notifyWiredAccessoryChanged interface and the UEventObserver
@@ -367,7 +363,6 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 if (LOG) Slog.v(TAG, "init() startObserving="+uei.getDevPath());
                 startObserving("DEVPATH="+uei.getDevPath());
             }
-            if (LOG) Slog.v(TAG, "init() done");
         }
 
         private int validateSwitchState(int state) {
@@ -433,9 +428,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
         @Override
         public void onUEvent(UEventObserver.UEvent event) {
-            //if (LOG) Slog.v(TAG, "UEVENT: " + event.toString());
+            if (LOG) Slog.v(TAG, "Headset UEVENT: " + event.toString());
 
-            // tmtmtm: handle UEvent containing ALSA usb audio device
+            // tmtmtm: handle UEvent containing ALSA usb audio device; based on code by jacknorris
             String major = event.get("MAJOR");
             String devname = event.get("DEVNAME");
             if (major!=null && major.equals(ALSA_ID)) {
@@ -454,8 +449,6 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                     } catch (Exception ex) {
                         Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
                     }
-                } else {
-		            //if(LOG) Slog.v(TAG, "NOT BEING HANDELED");
                 }
                 return;
             }
