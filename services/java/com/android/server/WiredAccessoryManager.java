@@ -45,6 +45,8 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.os.SystemProperties; // tmtmtm
+
 /**
  * <p>WiredAccessoryManager monitors for a wired headset on the main board or dock using
  * both the InputManagerService notifyWiredAccessoryChanged interface and the UEventObserver
@@ -434,20 +436,26 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             String major = event.get("MAJOR");
             String devname = event.get("DEVNAME");
             if (major!=null && major.equals(ALSA_ID)) {
-                String devpath = event.get("DEVPATH").toLowerCase();
-                if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
-                if (devpath.contains("usb") && !devpath.contains("gadget") && devname.endsWith("p")) {
-                    try {
-                        if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
-                        mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
-                        final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
-                        usbAudio.putExtra("state", event.get("ACTION").equals("add")?1:0);
-                        usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
-                        usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
-                        usbAudio.putExtra("channels", 2);
-                        mContext.sendStickyBroadcast(usbAudio);
-                    } catch (Exception ex) {
-                        Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
+                final String USE_HP_WIRED_ACCESSORY_PERSIST_PROP = "persist.sys.use_wired_accessory";
+                final String USE_HP_WIRED_ACCESSORY_DEFAULT = "1";
+                String useHpWiredAccessory = SystemProperties.get(USE_HP_WIRED_ACCESSORY_PERSIST_PROP,
+                                                                  USE_HP_WIRED_ACCESSORY_DEFAULT);
+                if("1".equals(useHpWiredAccessory)) {
+                    String devpath = event.get("DEVPATH").toLowerCase();
+                    if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
+                    if (devpath.contains("usb") && !devpath.contains("gadget") && devname.endsWith("p")) {
+                        try {
+                            if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
+                            mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
+                            final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
+                            usbAudio.putExtra("state", event.get("ACTION").equals("add")?1:0);
+                            usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
+                            usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
+                            usbAudio.putExtra("channels", 2);
+                            mContext.sendStickyBroadcast(usbAudio);
+                        } catch (Exception ex) {
+                            Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
+                        }
                     }
                 }
                 return;
