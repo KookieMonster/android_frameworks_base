@@ -6891,6 +6891,15 @@ public class WindowManagerService extends IWindowManager.Stub
         sl = reduceConfigLayout(sl, Surface.ROTATION_270, density, unrotDh, unrotDw);
         outConfig.smallestScreenWidthDp = (int)(displayInfo.smallestNominalAppWidth / density);
         outConfig.screenLayout = sl;
+
+        // tmtmtm
+	    final String USE_LANDSCAPE_UI_PERSIST_PROP = "persist.sys.use_landscape_mode";
+	    final String USE_LANDSCAPE_UI_DEFAULT = "0";
+        String useLandscapeMode = SystemProperties.get(USE_LANDSCAPE_UI_PERSIST_PROP,
+                                                           USE_LANDSCAPE_UI_DEFAULT);
+        if("1".equals(useLandscapeMode)) {
+        	outConfig.smallestScreenWidthDp=721;
+        }
     }
 
     private int reduceCompatConfigWidthSize(int curSize, int rotation, DisplayMetrics dm,

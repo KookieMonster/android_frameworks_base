@@ -1277,6 +1277,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
         }
+        
+
+        // tmtmtm
+	    final String USE_LANDSCAPE_UI_PERSIST_PROP = "persist.sys.use_landscape_mode";
+	    final String USE_LANDSCAPE_UI_DEFAULT = "0";
+        String useLandscapeMode = SystemProperties.get(USE_LANDSCAPE_UI_PERSIST_PROP,
+                                                           USE_LANDSCAPE_UI_DEFAULT);
+        if("1".equals(useLandscapeMode)) {
+			mHasSystemNavBar = true;
+			mNavigationBarCanMove = false;			
+        }
+
 
         if (!mHasSystemNavBar) {
             mHasNavigationBar = mContext.getResources().getBoolean(
