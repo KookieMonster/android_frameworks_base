@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.TextView;
+import android.os.SystemProperties;  // tmtmtm
 
 import com.android.internal.util.ArrayUtils;
 import com.android.systemui.R;
@@ -182,6 +183,16 @@ public class NavbarEditor implements OnTouchListener {
                 mIsDevicePhone = false;
             }
         }
+
+        // tmtmtm
+	    final String USE_LANDSCAPE_UI_PERSIST_PROP = "persist.sys.use_landscape_mode";
+	    final String USE_LANDSCAPE_UI_DEFAULT = "0";
+        String useLandscapeMode = SystemProperties.get(USE_LANDSCAPE_UI_PERSIST_PROP,
+                                                           USE_LANDSCAPE_UI_DEFAULT);
+        if("1".equals(useLandscapeMode)) {
+            mIsDevicePhone = false;
+        }
+
         return mIsDevicePhone;
     }
 

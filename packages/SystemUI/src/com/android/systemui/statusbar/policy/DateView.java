@@ -87,7 +87,10 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mParent == null) {
+		//tmtmtm fix Landscape UI:
+		// java.lang.ClassCastException: android.widget.LinearLayout cannot be cast to android.widget.RelativeLayout
+		// E/AndroidRuntime( 5430): 	at com.android.systemui.statusbar.policy.DateView.onDraw(DateView.java:91)
+        if (mParent == null && getParent() instanceof RelativeLayout) {
             mParent = (RelativeLayout) getParent();
             mParent.setOnClickListener(this);
             mParent.setOnLongClickListener(this);

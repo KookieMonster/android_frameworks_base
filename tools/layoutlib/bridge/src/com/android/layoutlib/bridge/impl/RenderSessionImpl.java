@@ -89,6 +89,7 @@ import android.widget.QuickContactBadge;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 import android.widget.TabWidget;
+import android.os.SystemProperties;  // tmtmtm
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -1137,6 +1138,15 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                     // 600+dp: "tablet" UI with bar on the bottom
                     barOnBottom = true;
                 }
+
+				// tmtmtm
+				final String USE_LANDSCAPE_UI_PERSIST_PROP = "persist.sys.use_landscape_mode";
+				final String USE_LANDSCAPE_UI_DEFAULT = "0";
+				String useLandscapeMode = SystemProperties.get(USE_LANDSCAPE_UI_PERSIST_PROP,
+				                                                   USE_LANDSCAPE_UI_DEFAULT);
+				if("1".equals(useLandscapeMode)) {
+                    barOnBottom = true;
+				}
             }
 
             if (barOnBottom) {
