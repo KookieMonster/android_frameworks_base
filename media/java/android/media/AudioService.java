@@ -2658,7 +2658,7 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
     }
 
     public void setWiredDeviceConnectionState(int device, int state, String name) {
-        Log.i(TAG, "setWiredDeviceConnectionState: device="+device+" state="+state+" name="+name);
+		Log.i(TAG, "setWiredDeviceConnectionState: device="+device+" state="+state+" name="+name);
         synchronized (mConnectedDevices) {
             int delay = checkSendBecomingNoisyIntent(device, state);
             queueMsgUnderWakeLock(mAudioHandler,
@@ -3713,30 +3713,27 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
     }
 
     private boolean handleDeviceConnection(boolean connected, int device, String params) {
-        Log.i(TAG, "handleDeviceConnection: connected="+connected+" device="+device+" params="+params);
         synchronized (mConnectedDevices) {
             boolean isConnected = (mConnectedDevices.containsKey(device) &&
                     (params.isEmpty() || mConnectedDevices.get(device).equals(params)));
+	        Log.i(TAG, "handleDeviceConnection: connected="+connected+" isConnected="+isConnected+" device="+device+" params="+params);
 
-            if (isConnected && !connected) {
+            if (!connected) {
                 Log.i(TAG, "handleDeviceConnection: setDeviceConnectionState DEVICE_STATE_UNAVAILABLE");
                 AudioSystem.setDeviceConnectionState(device,
                                               AudioSystem.DEVICE_STATE_UNAVAILABLE,
                                               mConnectedDevices.get(device));
                  mConnectedDevices.remove(device);
                  return true;
-            } else if (!isConnected && connected) {
-                Log.i(TAG, "handleDeviceConnection: setDeviceConnectionState DEVICE_STATE_AVAILABLE");
-                 AudioSystem.setDeviceConnectionState(device,
-                                                      AudioSystem.DEVICE_STATE_AVAILABLE,
-                                                      params);
-                 mConnectedDevices.put(new Integer(device), params);
-                 return true;
-            } else {
-                Log.i(TAG, "handleDeviceConnection: connect state unchanged");
             }
+
+            Log.i(TAG, "handleDeviceConnection: setDeviceConnectionState DEVICE_STATE_AVAILABLE");
+			AudioSystem.setDeviceConnectionState(device,
+                                                  AudioSystem.DEVICE_STATE_AVAILABLE,
+                                                  params);
+            mConnectedDevices.put(new Integer(device), params);
+            return true;
         }
-        return false;
     }
 
     // Devices which removal triggers intent ACTION_AUDIO_BECOMING_NOISY. The intent is only
@@ -3832,6 +3829,7 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
     private void onSetWiredDeviceConnectionState(int device, int state, String name)
     {
         Log.i(TAG, "onSetWiredDeviceConnectionState: device="+device+" state="+state+" name="+name);
+        // tmtmtm TODO create UI messages
         synchronized (mConnectedDevices) {
             if ((state == 0) && ((device == AudioSystem.DEVICE_OUT_WIRED_HEADSET) ||
                     (device == AudioSystem.DEVICE_OUT_WIRED_HEADPHONE))) {
@@ -4467,6 +4465,7 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
         public void binderDied() {
             synchronized(mAudioFocusLock) {
                 Log.w(TAG, "  AudioFocus   audio focus client died");
+                // tmtmtm TODO create UI messages
                 removeFocusStackEntryForClient(mCb);
             }
         }

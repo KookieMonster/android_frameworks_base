@@ -91,6 +91,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
     // tmtmtm
     private final Context mContext;
     private static final String ALSA_ID = "116";
+    private String activeAlsaOutputDevice = null;
 
     public WiredAccessoryManager(Context context, InputManagerService inputManager) {
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
@@ -106,7 +107,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
         // tmtmtm
         mContext = context;
-        mObserver.startObserving("MAJOR="+ALSA_ID);
+        //if (LOG) Slog.v(TAG, "init() startObserving="+ALSA_ID);
+        //mObserver.startObserving("MAJOR="+ALSA_ID);
 
         File f = new File("/sys/class/switch/dock/state");
         if (f!=null && f.exists()) {
@@ -365,6 +367,11 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 if (LOG) Slog.v(TAG, "init() startObserving="+uei.getDevPath());
                 startObserving("DEVPATH="+uei.getDevPath());
             }
+
+	        // tmtmtm
+            if (LOG) Slog.v(TAG, "init() startObserving="+ALSA_ID);
+            activeAlsaOutputDevice = null;
+	        mObserver.startObserving("MAJOR="+ALSA_ID);
         }
 
         private int validateSwitchState(int state) {
@@ -430,7 +437,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
         @Override
         public void onUEvent(UEventObserver.UEvent event) {
-            if (LOG) Slog.v(TAG, "Headset UEVENT: " + event.toString());
+            //if (LOG) Slog.v(TAG, "Headset UEVENT: " + event.toString());
 
             // tmtmtm: handle UEvent containing ALSA usb audio device; based on code by jacknorris
             String major = event.get("MAJOR");
@@ -442,20 +449,41 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                                                                   USE_HP_WIRED_ACCESSORY_DEFAULT);
                 if("1".equals(useHpWiredAccessory)) {
                     String devpath = event.get("DEVPATH").toLowerCase();
-                    if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
+                  //if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
+                    if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" action="+event.get("ACTION"));
                     if (devpath.contains("usb") && !devpath.contains("gadget") && devname.endsWith("p")) {
-                        try {
-                            if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
-                            mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
-                            final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
-                            usbAudio.putExtra("state", event.get("ACTION").equals("add")?1:0);
-                            usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
-                            usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
-                            usbAudio.putExtra("channels", 2);
-                            mContext.sendStickyBroadcast(usbAudio);
-                        } catch (Exception ex) {
-                            Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
-                        }
+                    	boolean actionAdd = event.get("ACTION").equals("add");
+/*
+				        final String HP_WIRED_ACCESSORY_PREF_DEV_PROP = "persist.sys.wired_acc_pref_dev";
+				        final String HP_WIRED_ACCESSORY_PREF_DEV_DEFAULT = "#";
+				        String hpWiredAccessoryPrefDev = SystemProperties.get(HP_WIRED_ACCESSORY_PREF_DEV_PROP,
+				                                                              HP_WIRED_ACCESSORY_PREF_DEV_DEFAULT);
+                    	if(!actionAdd || activeAlsaOutputDevice==null || //hpWiredAccessoryPrefDev.length()<1 || 
+	                   	    	devname.endsWith(hpWiredAccessoryPrefDev+"p")) {
+*/
+		                    try {
+		                        if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
+		                        mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
+		                        final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
+		                        usbAudio.putExtra("state", actionAdd?1:0);
+		                        usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
+		                        usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
+		                        usbAudio.putExtra("channels", 2);
+//		                        mContext.sendStickyBroadcast(usbAudio);
+		                        mContext.sendBroadcast(usbAudio);
+/*
+		                        if(actionAdd) {
+		                        	activeAlsaOutputDevice = devname;
+		                        } else if(devname.equals(activeAlsaOutputDevice)) {
+		                        	activeAlsaOutputDevice  = null;
+		                        } 
+*/
+		                    } catch (Exception ex) {
+		                        Slog.e(TAG, "Could not broadcast USB_AUDIO_DEVICE_PLUG " + ex);
+		                    }
+/*
+		                }
+*/
                     }
                 }
                 return;
