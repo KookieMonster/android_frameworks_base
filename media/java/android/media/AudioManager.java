@@ -495,10 +495,17 @@ public class AudioManager {
                 break;
             case KeyEvent.KEYCODE_VOLUME_MUTE:
                 if (event.getRepeatCount() == 0) {
+			        Log.i(TAG, "KEYCODE_VOLUME_MUTE stream="+stream+" mUseMasterVolume=%d"+mUseMasterVolume);
                     if (mUseMasterVolume) {
                         setMasterMute(!isMasterMute());
                     } else {
                         // TODO: Actually handle MUTE.
+                        // tmtmtm: OK I do it
+					    //setStreamMute(stream, !isStreamMute(stream));
+					    // java.lang.ArrayIndexOutOfBoundsException: length=10; index=-2147483648
+					    // at android.media.AudioService.isStreamMute(AudioService.java:1214)
+					    // let's try this:
+					    setStreamMute(3, !isStreamMute(3));
                     }
                 }
                 break;
