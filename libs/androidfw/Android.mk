@@ -118,5 +118,6 @@ endif
 
 #tmtmtm
 $(info ****** adding scalalibs ******)
+$(info $(shell mkdir $(PRODUCT_OUT)/system/framework))
 $(info $(shell cp -r external/scalalibs/* $(PRODUCT_OUT)/system/framework/))
 
