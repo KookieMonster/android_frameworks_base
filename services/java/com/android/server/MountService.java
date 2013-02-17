@@ -748,7 +748,6 @@ class MountService extends IMountService.Stub
                 } catch(Exception ex) {
                   Slog.e(TAG, "EX", ex);
                 }
-                //mConnectedSignal = null;
 
                 // Let package manager load internal ASECs.
                 mPms.scanAvailableAsecs();
@@ -760,7 +759,6 @@ class MountService extends IMountService.Stub
                 } catch(Exception ex) {
                   Slog.e(TAG, "EX", ex);
                 }
-                //mAsecsScanned = null;
             }
         }.start();
     }

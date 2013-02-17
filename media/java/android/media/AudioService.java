@@ -3713,6 +3713,7 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
     }
 
     private boolean handleDeviceConnection(boolean connected, int device, String params) {
+        Log.i(TAG, "handleDeviceConnection: connected="+connected+" device="+device+" params="+params);
         synchronized (mConnectedDevices) {
             boolean isConnected = (mConnectedDevices.containsKey(device) &&
                     (params.isEmpty() || mConnectedDevices.get(device).equals(params)));
