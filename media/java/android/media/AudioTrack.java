@@ -683,8 +683,35 @@ public class AudioTrack
             }
         }
 
+/*
+/proc/asound/card1/stream0
+
+FiiO DigiHug USB Audio at usb-0000:00:1a.7-2.4, full speed : USB Audio
+
+Playback:
+  Status: Running
+    Interface = 3
+    Altset = 2
+    Packet Size = 582
+    Momentary freq = 96000 Hz (0x60.0000)
+  Interface 3
+    Altset 1
+    Format: S16_LE
+    Channels: 2
+    Endpoint: 3 OUT (ADAPTIVE)
+    Rates: 32000, 44100, 48000, 96000
+  Interface 3
+    Altset 2
+    Format: S24_3LE
+    Channels: 2
+    Endpoint: 3 OUT (ADAPTIVE)
+    Rates: 32000, 44100, 48000, 96000
+
+
+*/
         if ((audioFormat != AudioFormat.ENCODING_PCM_16BIT)
             && (audioFormat != AudioFormat.ENCODING_PCM_8BIT)
+            && (audioFormat != AudioFormat.ENCODING_PCM_24BIT)       // tmtmtm TODO: only if DAC supports this
             && (audioFormat != AudioFormat.ENCODING_AMRNB)
             && (audioFormat != AudioFormat.ENCODING_AMRWB)
             && (audioFormat != AudioFormat.ENCODING_EVRC)

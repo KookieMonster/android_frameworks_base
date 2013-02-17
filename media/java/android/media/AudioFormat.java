@@ -36,6 +36,10 @@ public class AudioFormat {
     public static final int ENCODING_PCM_16BIT = 2;
     /** Audio data format: PCM 8 bit per sample. Not guaranteed to be supported by devices. */
     public static final int ENCODING_PCM_8BIT = 3;
+
+    // tmtmtm
+    public static final int ENCODING_PCM_24BIT = 4;
+
     /** @hide */
     public static final int ENCODING_AMRNB = 100;   // accessed by native code
     /** @hide */
