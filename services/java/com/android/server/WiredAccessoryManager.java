@@ -489,29 +489,6 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 return;
             }
 
-            // tmtmtm: handle UEvent containing ALSA usb audio device; based on code by jacknorris
-            String major = event.get("MAJOR");
-            String devname = event.get("DEVNAME");
-            if (major!=null && major.equals(ALSA_ID)) {
-                String devpath = event.get("DEVPATH").toLowerCase();
-                if(LOG) Slog.i(TAG, "#### onUEvent ALSA_ID name="+devname+" devpath="+devpath);
-                if (devpath.contains("usb") && !devpath.contains("gadget") && devname.endsWith("p")) {
-                    try {
-                        if (LOG) Slog.i(TAG, "#### broadcast AUDIO_BECOMING_NOISY + USB_AUDIO_DEVICE_PLUG");
-                        mContext.sendBroadcast(new Intent("android.media.AUDIO_BECOMING_NOISY"));
-                        final Intent usbAudio = new Intent("android.intent.action.USB_AUDIO_DEVICE_PLUG");
-                        usbAudio.putExtra("state", event.get("ACTION").equals("add")?1:0);
-                        usbAudio.putExtra("card", Integer.parseInt(""+devname.charAt(8)));
-                        usbAudio.putExtra("device", Integer.parseInt(""+devname.charAt(10)));
-                        usbAudio.putExtra("channels", 2);
-                        mContext.sendStickyBroadcast(usbAudio);
-                    } catch (Exception ex) {
-                        Slog.e(TAG, "Could not broadcast USB_AUDIO_ACCESSORY_PLUG " + ex);
-                    }
-                }
-                return;
-            }
-
             int state = validateSwitchState(Integer.parseInt(event.get("SWITCH_STATE")));
             try {
                 String devPath = event.get("DEVPATH");
